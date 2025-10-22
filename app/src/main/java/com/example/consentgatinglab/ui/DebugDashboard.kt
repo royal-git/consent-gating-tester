@@ -1,10 +1,34 @@
 package com.example.consentgatinglab.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -12,8 +36,16 @@ import com.example.consentgatinglab.analytics.AnalyticsController
 import com.example.consentgatinglab.core.ConsentManager
 import com.example.consentgatinglab.core.ConsentSnapshot
 import com.example.consentgatinglab.core.ConsentType
+import com.example.consentgatinglab.ump.UmpSnapshot
 import com.example.consentgatinglab.ump.UmpStateSource
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+private enum class DashboardTab(val label: String) {
+    Consent("Consent & Signals"),
+    AppEvents("App Events"),
+    SdkLab("SDK Lab")
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +63,6 @@ fun DebugDashboard(
     var marketing by remember { mutableStateOf(false) }
     var personalization by remember { mutableStateOf(false) }
 
-    // Sync switches with persistent consent state
     LaunchedEffect(consentState) {
         analytics = consentState.granted.contains(ConsentType.ANALYTICS)
         marketing = consentState.granted.contains(ConsentType.MARKETING)
@@ -39,7 +70,10 @@ fun DebugDashboard(
     }
 
     val umpSnap by ump.flow.collectAsState()
-    var gdpr by remember { mutableStateOf(false) } // simple toggle for demo
+    var gdpr by remember { mutableStateOf(false) }
+    val isStarted by controller.isStarted.collectAsState()
+
+    var selectedTab by remember { mutableStateOf(DashboardTab.Consent) }
 
     Scaffold(
         topBar = {
@@ -49,264 +83,302 @@ fun DebugDashboard(
         Column(
             Modifier
                 .padding(pad)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("consent toggles", style = MaterialTheme.typography.titleMedium)
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(checked = analytics, onCheckedChange = { analytics = it })
-                Spacer(Modifier.width(8.dp))
-                Text("analytics")
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(checked = marketing, onCheckedChange = { marketing = it })
-                Spacer(Modifier.width(8.dp))
-                Text("marketing")
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(checked = personalization, onCheckedChange = { personalization = it })
-                Spacer(Modifier.width(8.dp))
-                Text("personalization")
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    scope.launch {
-                        val set = buildSet {
-                            if (analytics) add(ConsentType.ANALYTICS)
-                            if (marketing) add(ConsentType.MARKETING)
-                            if (personalization) add(ConsentType.PERSONALIZATION)
-                        }
-                        consent.update(set, null)
-                    }
-                }) {
-                    Text("apply app consent")
-                }
-                Button(onClick = {
-                    scope.launch {
-                        consent.update(emptySet(), null)
-                    }
-                }) {
-                    Text("clear all")
+            TabRow(selectedTabIndex = selectedTab.ordinal) {
+                DashboardTab.values().forEach { tab ->
+                    Tab(
+                        selected = selectedTab == tab,
+                        onClick = { selectedTab = tab },
+                        text = { Text(tab.label) }
+                    )
                 }
             }
 
-            HorizontalDivider()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                when (selectedTab) {
+                    DashboardTab.Consent -> ConsentTab(
+                        analytics = analytics,
+                        onAnalyticsChange = { analytics = it },
+                        marketing = marketing,
+                        onMarketingChange = { marketing = it },
+                        personalization = personalization,
+                        onPersonalizationChange = { personalization = it },
+                        consent = consent,
+                        scope = scope,
+                        ump = ump,
+                        umpSnap = umpSnap,
+                        gdpr = gdpr,
+                        onGdprChange = { gdpr = it },
+                        isStarted = isStarted,
+                        modifier = Modifier.fillMaxSize()
+                    )
 
-            Text("ump (simulated)", style = MaterialTheme.typography.titleMedium)
+                    DashboardTab.AppEvents -> AppEventsTab(
+                        controller = controller,
+                        modifier = Modifier.fillMaxSize()
+                    )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(
-                    checked = umpSnap.ready,
-                    onCheckedChange = { ump.update(umpSnap.copy(ready = it)) }
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("ump ready")
+                    DashboardTab.SdkLab -> SdkLabTab(
+                        controller = controller,
+                        scope = scope,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
+        }
+    }
+}
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(
-                    checked = umpSnap.hasTcf,
-                    onCheckedChange = { ump.update(umpSnap.copy(hasTcf = it)) }
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("has TCF string")
+@Composable
+private fun ConsentTab(
+    analytics: Boolean,
+    onAnalyticsChange: (Boolean) -> Unit,
+    marketing: Boolean,
+    onMarketingChange: (Boolean) -> Unit,
+    personalization: Boolean,
+    onPersonalizationChange: (Boolean) -> Unit,
+    consent: ConsentManager,
+    scope: CoroutineScope,
+    ump: UmpStateSource,
+    umpSnap: UmpSnapshot,
+    gdpr: Boolean,
+    onGdprChange: (Boolean) -> Unit,
+    isStarted: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Consent toggles", style = MaterialTheme.typography.titleMedium)
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Switch(checked = analytics, onCheckedChange = onAnalyticsChange)
+            Spacer(Modifier.width(8.dp))
+            Text("analytics")
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Switch(checked = marketing, onCheckedChange = onMarketingChange)
+            Spacer(Modifier.width(8.dp))
+            Text("marketing")
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Switch(checked = personalization, onCheckedChange = onPersonalizationChange)
+            Spacer(Modifier.width(8.dp))
+            Text("personalization")
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = {
+                scope.launch {
+                    val granted = buildSet {
+                        if (analytics) add(ConsentType.ANALYTICS)
+                        if (marketing) add(ConsentType.MARKETING)
+                        if (personalization) add(ConsentType.PERSONALIZATION)
+                    }
+                    consent.update(granted, null)
+                }
+            }) {
+                Text("apply app consent")
             }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(checked = gdpr, onCheckedChange = { gdpr = it })
-                Spacer(Modifier.width(8.dp))
-                Text("gdpr subject (app)")
+            Button(onClick = {
+                scope.launch {
+                    consent.update(emptySet(), null)
+                }
+            }) {
+                Text("clear all")
             }
+        }
 
-            HorizontalDivider()
+        Spacer(Modifier.height(4.dp))
+        Text("UMP (simulated)", style = MaterialTheme.typography.titleMedium)
 
-            val isStarted by controller.isStarted.collectAsState()
-            Text("appsFlyer SDK", style = MaterialTheme.typography.titleMedium)
-            Text("isStarted: $isStarted", style = MaterialTheme.typography.bodyLarge)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Switch(
+                checked = umpSnap.ready,
+                onCheckedChange = { ready -> ump.update(umpSnap.copy(ready = ready)) }
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("ump ready")
+        }
 
-            Text("AppsFlyer Consent (their API)", style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Switch(
+                checked = umpSnap.hasTcf,
+                onCheckedChange = { hasTcf -> ump.update(umpSnap.copy(hasTcf = hasTcf)) }
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("has TCF string")
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Switch(checked = gdpr, onCheckedChange = onGdprChange)
+            Spacer(Modifier.width(8.dp))
+            Text("gdpr subject (app toggle placeholder)")
+        }
+
+        Spacer(Modifier.height(4.dp))
+        Text("AppsFlyer SDK state", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "isStarted: $isStarted",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            "Toggle consent & UMP above to watch AfCoordinator start/stop decisions.",
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+}
+
+@Composable
+private fun AppEventsTab(
+    controller: AnalyticsController,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("App layer (gated)", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "These calls route through AnalyticsController.sink. When consent is denied, expect 🚫 NoopSink logs and no AppsFlyer traffic.",
+            style = MaterialTheme.typography.bodySmall
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { controller.logEvent("app_layer_event") },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("log event (app)")
+            }
+            Button(
+                onClick = { controller.logRevenue("9.99", "USD") },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("log revenue (app)")
+            }
+        }
+
+        Button(
+            onClick = { controller.setUserId("app_user_${System.currentTimeMillis()}") },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("set user ID (app)")
+        }
+    }
+}
+
+@Composable
+private fun SdkLabTab(
+    controller: AnalyticsController,
+    scope: CoroutineScope,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("AppsFlyer SDK experiments", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "Direct AppsFlyer SDK calls for vendor-behaviour testing. These bypass the consent gate—watch Logcat closely.",
+            style = MaterialTheme.typography.bodySmall
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
                     scope.launch {
-                        // Grant all consent for GDPR user
                         controller.setConsent(
                             isGdprSubject = true,
                             hasDataUsageConsent = true,
                             hasAdPersonalizationConsent = true
                         )
                     }
-                }) {
-                    Text("AF: grant all")
-                }
-                Button(onClick = {
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("AF: grant all")
+            }
+            Button(
+                onClick = {
                     scope.launch {
-                        // Deny all consent for GDPR user
                         controller.setConsent(
                             isGdprSubject = true,
                             hasDataUsageConsent = false,
                             hasAdPersonalizationConsent = false
                         )
                     }
-                }) {
-                    Text("AF: deny all")
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-            Text("SDK Lifecycle", style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    scope.launch { controller.stop() }
-                }) {
-                    Text("stop()")
-                }
-                Button(onClick = {
-                    scope.launch { controller.startIfAllowed(true) }
-                }) {
-                    Text("start()")
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-            Text("App layer (gated)", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Calls go through AnalyticsController.sink. Expect 🚫 logs when consent is denied.",
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(onClick = {
-                    controller.logEvent("app_layer_event")
-                }, modifier = Modifier.weight(1f)) {
-                    Text("log event (app)")
-                }
-                Button(onClick = {
-                    controller.logRevenue("9.99", "USD")
-                }, modifier = Modifier.weight(1f)) {
-                    Text("log revenue (app)")
-                }
-            }
-
-            Button(
-                onClick = {
-                    controller.setUserId("app_user_${System.currentTimeMillis()}")
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.weight(1f)
             ) {
-                Text("set user ID (app)")
+                Text("AF: deny all")
             }
+        }
 
-            Spacer(Modifier.height(12.dp))
-            Text("AppsFlyer SDK experiments", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "These buttons call AppsFlyer APIs directly to probe vendor behaviour. Consent gate is bypassed.",
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            var cacheStatus by remember { mutableStateOf("Not checked") }
-
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Button(
-                onClick = {
-                    scope.launch {
-                        cacheStatus = controller.checkCachedRequests()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { scope.launch { controller.startIfAllowed(true) } },
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Check AF cache for queued requests")
+                Text("start()")
             }
-            Text(cacheStatus, style = MaterialTheme.typography.bodySmall)
-
-            Spacer(Modifier.height(8.dp))
-            Text("Scenario 1: Force stop() then log event", style = MaterialTheme.typography.titleSmall)
             Button(
-                onClick = {
-                    scope.launch {
-                        controller.stop()
-                        kotlinx.coroutines.delay(500)
-                        controller.logTestEvent("scenario_1_stopped")
-                        kotlinx.coroutines.delay(500)
-                        cacheStatus = controller.checkCachedRequests()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { scope.launch { controller.stop() } },
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Run (force): stop() → logEvent() → check cache")
+                Text("stop()")
             }
+        }
 
-            Spacer(Modifier.height(8.dp))
-            Text("Scenario 2: Force consent denied then log event", style = MaterialTheme.typography.titleSmall)
+        Spacer(Modifier.height(8.dp))
+        Text("Force: individual AF API calls", style = MaterialTheme.typography.titleSmall)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Button(
-                onClick = {
-                    scope.launch {
-                        controller.setConsent(true, false, false)
-                        kotlinx.coroutines.delay(500)
-                        controller.logTestEvent("scenario_2_consent_denied")
-                        kotlinx.coroutines.delay(500)
-                        cacheStatus = controller.checkCachedRequests()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { scope.launch { controller.logTestEvent() } },
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Run (force): deny consent → logEvent() → check cache")
+                Text("force log event")
             }
-
-            Spacer(Modifier.height(8.dp))
-            Text("Scenario 3: Force consent granted + start() + log event", style = MaterialTheme.typography.titleSmall)
             Button(
-                onClick = {
-                    scope.launch {
-                        controller.setConsent(true, true, true)
-                        kotlinx.coroutines.delay(500)
-                        controller.startIfAllowed(true)
-                        kotlinx.coroutines.delay(500)
-                        controller.logTestEvent("scenario_3_granted")
-                        kotlinx.coroutines.delay(500)
-                        cacheStatus = controller.checkCachedRequests()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { scope.launch { controller.logTestRevenue() } },
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Run (force): grant consent → start() → logEvent()")
+                Text("force log revenue")
             }
+        }
 
-            Spacer(Modifier.height(8.dp))
-            Text("Force: individual AF API calls", style = MaterialTheme.typography.titleSmall)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(onClick = {
-                    scope.launch { controller.logTestEvent() }
-                }, modifier = Modifier.weight(1f)) {
-                    Text("force log event")
-                }
-                Button(onClick = {
-                    scope.launch { controller.logTestRevenue() }
-                }, modifier = Modifier.weight(1f)) {
-                    Text("force log revenue")
-                }
-            }
-
-            Button(onClick = {
-                scope.launch { controller.setTestUserId() }
-            }) {
-                Text("force set user ID")
-            }
-
-            Spacer(Modifier.height(12.dp))
-            Text("events", style = MaterialTheme.typography.titleMedium)
-            Text("see Logcat (Timber) for full trace, start/stop latency, consent diffs",
-                style = MaterialTheme.typography.bodySmall)
+        Button(
+            onClick = { scope.launch { controller.setTestUserId() } },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("force set user ID")
         }
     }
 }
