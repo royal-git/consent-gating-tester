@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "sdks": [
+    {
+      "id": "APPSFLYER",
+      "requiredConsent": ["ANALYTICS", "MARKETING"],
+      "initOrder": 10,
+      "thread": "BACKGROUND"
+    }
+  ]
+}

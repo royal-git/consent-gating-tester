@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+        DEBUG ONLY: Block all traffic to AppsFlyer domains.
+        This ensures that any accidental pre-consent network calls fail fast
+        with a clear error in Logcat, making it easy to spot gating violations.
+    -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">appsflyer.com</domain>
+        <domain includeSubdomains="true">onelink.me</domain>
+        <trust-anchors>
+            <!-- Empty trust anchors = block all -->
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Allow all other traffic normally -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

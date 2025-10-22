@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!--
+        Include/exclude specific paths for backup
+        See: https://developer.android.com/guide/topics/data/autobackup
+    -->
+</full-backup-content>
