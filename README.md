@@ -23,7 +23,7 @@ ConsentGatingLab is a reference implementation showing how to:
 
 - **ConsentManager**: Manages user consent state with DataStore persistence
 - **UmpStateSource**: Simulates UMP signals for GDPR compliance testing
-- **AppsFlyerController**: Encapsulates all AppsFlyer SDK interactions
+- **AnalyticsController**: Consent-gated orchestrator that swaps AppsFlyer sinks
 - **AfCoordinator**: Orchestrates SDK lifecycle based on consent + UMP state
 - **SdkRegistry**: Loads SDK policies from `assets/sdk_policy.json`
 
@@ -34,7 +34,8 @@ com.example.consentgatinglab/
 ├── core/          # Core types and interfaces
 ├── consent/       # Consent management implementation
 ├── ump/           # UMP state simulation
-├── appsflyer/     # AppsFlyer controller and consent mapping
+├── analytics/     # Analytics controller + sinks
+├── appsflyer/     # AppsFlyer consent mapping helpers
 ├── gate/          # Coordination logic
 ├── diag/          # Diagnostics (EventBus, Metrics, Tripwire)
 ├── ui/            # Compose debug dashboard

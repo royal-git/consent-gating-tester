@@ -1,7 +1,7 @@
 package com.example.consentgatinglab.app
 
 import android.app.Application
-import com.example.consentgatinglab.appsflyer.AppsFlyerController
+import com.example.consentgatinglab.analytics.AnalyticsController
 import com.example.consentgatinglab.consent.DefaultConsentManager
 import com.example.consentgatinglab.gate.AfCoordinator
 import com.example.consentgatinglab.ump.UmpStateSource
@@ -20,7 +20,7 @@ class MyApp : Application() {
     lateinit var ump: UmpStateSource
 
     @Inject
-    lateinit var controller: AppsFlyerController
+    lateinit var analytics: AnalyticsController
 
     override fun onCreate() {
         super.onCreate()
@@ -38,7 +38,7 @@ class MyApp : Application() {
             consentFlow = consent.flow,
             umpFlow = ump.flow,
             isGdprSubject = gdprRegion,
-            controller = controller
+            controller = analytics
         ).start()
 
         // Seed: default deny all (already handled by DefaultConsentManager initial state)

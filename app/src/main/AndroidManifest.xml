@@ -35,7 +35,7 @@
 
         <!--
             IMPORTANT: NO AppsFlyer auto-init components here!
-            All AppsFlyer lifecycle is controlled by AppsFlyerController.
+            All AppsFlyer lifecycle is controlled by AnalyticsController.
             DO NOT add any receivers or services that might auto-start AppsFlyer.
         -->
     </application>

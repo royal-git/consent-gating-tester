@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.consentgatinglab.appsflyer.AppsFlyerController
+import com.example.consentgatinglab.analytics.AnalyticsController
 import com.example.consentgatinglab.core.ConsentManager
 import com.example.consentgatinglab.core.ConsentSnapshot
 import com.example.consentgatinglab.core.ConsentType
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 fun DebugDashboard(
     consent: ConsentManager,
     ump: UmpStateSource,
-    controller: AppsFlyerController
+    controller: AnalyticsController
 ) {
     val scope = rememberCoroutineScope()
     val consentState by consent.flow.collectAsState(

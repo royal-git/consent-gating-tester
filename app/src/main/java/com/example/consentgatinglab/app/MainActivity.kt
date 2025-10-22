@@ -3,7 +3,7 @@ package com.example.consentgatinglab.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.consentgatinglab.appsflyer.AppsFlyerController
+import com.example.consentgatinglab.analytics.AnalyticsController
 import com.example.consentgatinglab.consent.DefaultConsentManager
 import com.example.consentgatinglab.ui.DebugDashboard
 import com.example.consentgatinglab.ump.UmpStateSource
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
     lateinit var ump: UmpStateSource
 
     @Inject
-    lateinit var controller: AppsFlyerController
+    lateinit var controller: AnalyticsController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
