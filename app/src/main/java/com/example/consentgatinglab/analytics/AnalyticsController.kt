@@ -154,6 +154,7 @@ class AnalyticsController(
         return@withContext runCatching {
             val ts = System.currentTimeMillis()
             Timber.w("📤 logEvent: $eventName at $ts (AF isStarted=${_isStarted.value})")
+            Timber.w("  ↳ Bypassing consent gate: direct AppsFlyer SDK call")
 
             val params = mapOf(
                 "test_param" to "test_value",
@@ -174,6 +175,7 @@ class AnalyticsController(
         withContext(dispatcher) {
             return@withContext runCatching {
                 Timber.w("📤 setCustomerUserId: $userId (AF isStarted=${_isStarted.value})")
+                Timber.w("  ↳ Bypassing consent gate: direct AppsFlyer SDK call")
 
                 AppsFlyerLib.getInstance().setCustomerUserId(userId)
                 Timber.w("  ↳ Called AF setCustomerUserId - check if data is prepared/cached")
@@ -188,6 +190,7 @@ class AnalyticsController(
         return@withContext runCatching {
             val ts = System.currentTimeMillis()
             Timber.w("📤 logEvent: af_purchase at $ts (AF isStarted=${_isStarted.value})")
+            Timber.w("  ↳ Bypassing consent gate: direct AppsFlyer SDK call")
 
             val params = mapOf(
                 "af_revenue" to "9.99",

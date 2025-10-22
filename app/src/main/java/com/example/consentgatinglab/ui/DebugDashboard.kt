@@ -174,9 +174,43 @@ fun DebugDashboard(
             }
 
             Spacer(Modifier.height(12.dp))
-            Text("Test Scenarios", style = MaterialTheme.typography.titleMedium)
-            Text("Call AF APIs and watch Logcat for 'preparing data', 'CACHE', 'QUEUE'",
-                style = MaterialTheme.typography.bodySmall)
+            Text("App layer (gated)", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Calls go through AnalyticsController.sink. Expect 🚫 logs when consent is denied.",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = {
+                    controller.logEvent("app_layer_event")
+                }, modifier = Modifier.weight(1f)) {
+                    Text("log event (app)")
+                }
+                Button(onClick = {
+                    controller.logRevenue("9.99", "USD")
+                }, modifier = Modifier.weight(1f)) {
+                    Text("log revenue (app)")
+                }
+            }
+
+            Button(
+                onClick = {
+                    controller.setUserId("app_user_${System.currentTimeMillis()}")
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("set user ID (app)")
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Text("AppsFlyer SDK experiments", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "These buttons call AppsFlyer APIs directly to probe vendor behaviour. Consent gate is bypassed.",
+                style = MaterialTheme.typography.bodySmall
+            )
 
             var cacheStatus by remember { mutableStateOf("Not checked") }
 
@@ -193,7 +227,7 @@ fun DebugDashboard(
             Text(cacheStatus, style = MaterialTheme.typography.bodySmall)
 
             Spacer(Modifier.height(8.dp))
-            Text("Scenario 1: AF stopped + log event", style = MaterialTheme.typography.titleSmall)
+            Text("Scenario 1: Force stop() then log event", style = MaterialTheme.typography.titleSmall)
             Button(
                 onClick = {
                     scope.launch {
@@ -206,11 +240,11 @@ fun DebugDashboard(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Run: stop() → logEvent() → check cache")
+                Text("Run (force): stop() → logEvent() → check cache")
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("Scenario 2: AF consent denied + log event", style = MaterialTheme.typography.titleSmall)
+            Text("Scenario 2: Force consent denied then log event", style = MaterialTheme.typography.titleSmall)
             Button(
                 onClick = {
                     scope.launch {
@@ -223,11 +257,11 @@ fun DebugDashboard(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Run: deny consent → logEvent() → check cache")
+                Text("Run (force): deny consent → logEvent() → check cache")
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("Scenario 3: AF consent granted + started + log event", style = MaterialTheme.typography.titleSmall)
+            Text("Scenario 3: Force consent granted + start() + log event", style = MaterialTheme.typography.titleSmall)
             Button(
                 onClick = {
                     scope.launch {
@@ -242,28 +276,31 @@ fun DebugDashboard(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Run: grant consent → start() → logEvent()")
+                Text("Run (force): grant consent → start() → logEvent()")
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("Individual API Calls", style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Force: individual AF API calls", style = MaterialTheme.typography.titleSmall)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Button(onClick = {
                     scope.launch { controller.logTestEvent() }
-                }) {
-                    Text("log event")
+                }, modifier = Modifier.weight(1f)) {
+                    Text("force log event")
                 }
                 Button(onClick = {
                     scope.launch { controller.logTestRevenue() }
-                }) {
-                    Text("log revenue")
+                }, modifier = Modifier.weight(1f)) {
+                    Text("force log revenue")
                 }
             }
 
             Button(onClick = {
                 scope.launch { controller.setTestUserId() }
             }) {
-                Text("set user ID")
+                Text("force set user ID")
             }
 
             Spacer(Modifier.height(12.dp))
