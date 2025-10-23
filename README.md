@@ -1,6 +1,6 @@
 # ConsentGatingLab
 
-Tiny Kotlin/Android playground I hacked together to sanity-check consent-gated AppsFlyer init/stop flows without touching the real app. It is not production-ready, audited, or polished—just a vibe-coded tool for teammates to poke at SDK behaviours.
+Tiny Kotlin/Android playground I hacked together to sanity-check consent-gated AppsFlyer init/stop flows without touching the real app. It is not production-ready, audited, or polished—just a vibe-coded tool to poke at SDK behaviours.
 
 ## What’s Here
 - Switchable consent + mock UMP signals to drive start/stop decisions.
