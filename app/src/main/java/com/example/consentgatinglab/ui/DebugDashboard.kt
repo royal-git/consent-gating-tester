@@ -72,6 +72,7 @@ fun DebugDashboard(
     val umpSnap by ump.flow.collectAsState()
     var gdpr by remember { mutableStateOf(false) }
     val isStarted by controller.isStarted.collectAsState()
+    val isBootstrapped by controller.isBootstrapped.collectAsState()
 
     var selectedTab by remember { mutableStateOf(DashboardTab.Consent) }
 
@@ -114,6 +115,7 @@ fun DebugDashboard(
                         umpSnap = umpSnap,
                         gdpr = gdpr,
                         onGdprChange = { gdpr = it },
+                        isBootstrapped = isBootstrapped,
                         isStarted = isStarted,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -148,6 +150,7 @@ private fun ConsentTab(
     umpSnap: UmpSnapshot,
     gdpr: Boolean,
     onGdprChange: (Boolean) -> Unit,
+    isBootstrapped: Boolean,
     isStarted: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -229,11 +232,15 @@ private fun ConsentTab(
         Spacer(Modifier.height(4.dp))
         Text("AppsFlyer SDK state", style = MaterialTheme.typography.titleMedium)
         Text(
-            "isStarted: $isStarted",
+            "bootstrapped: $isBootstrapped",
             style = MaterialTheme.typography.bodyLarge
         )
         Text(
-            "Toggle consent & UMP above to watch AfCoordinator start/stop decisions.",
+            "started: $isStarted",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            "Toggle consent & UMP above to watch AfCoordinator decisions and how they change these states.",
             style = MaterialTheme.typography.bodySmall
         )
     }

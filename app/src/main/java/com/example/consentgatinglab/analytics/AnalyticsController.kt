@@ -34,9 +34,11 @@ class AnalyticsController(
 
     private val _sink = AtomicReference<AnalyticsSink>(NoopSink)
     private val _isStarted = MutableStateFlow(false)
+    private val _isBootstrapped = MutableStateFlow(false)
 
     val sink: AnalyticsSink get() = _sink.get()
     val isStarted: StateFlow<Boolean> = _isStarted
+    val isBootstrapped: StateFlow<Boolean> = _isBootstrapped
 
     // Instrumentation listeners to detect data flow
     private val conversionListener = object : AppsFlyerConversionListener {
@@ -317,6 +319,7 @@ class AnalyticsController(
         af.subscribeForDeepLink(deepLinkListener)
 
         bootstrapped = true
+        _isBootstrapped.value = true
         Timber.i("AF bootstrap ok - listeners active, TCF enabled, will log all data flow")
     }
 
