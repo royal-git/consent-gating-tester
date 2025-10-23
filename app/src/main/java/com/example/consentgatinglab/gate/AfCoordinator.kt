@@ -3,6 +3,7 @@ package com.example.consentgatinglab.gate
 import com.example.consentgatinglab.analytics.AnalyticsController
 import com.example.consentgatinglab.appsflyer.AfConsentMapper
 import com.example.consentgatinglab.core.ConsentSnapshot
+import com.example.consentgatinglab.core.ConsentType
 import com.example.consentgatinglab.ump.UmpSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +19,8 @@ class AfCoordinator(
     private val consentFlow: Flow<ConsentSnapshot>,
     private val umpFlow: Flow<UmpSnapshot>,
     private val isGdprSubject: () -> Boolean,
-    private val controller: AnalyticsController
+    private val controller: AnalyticsController,
+    private val requiredConsent: Set<ConsentType>
 ) {
     fun start() {
         scope.launch {
@@ -28,6 +30,7 @@ class AfCoordinator(
             ) { granted, ump ->
                 AfConsentMapper.effective(
                     granted = granted,
+                    required = requiredConsent,
                     gdprSubject = isGdprSubject(),
                     umpReady = ump.ready,
                     hasTcf = ump.hasTcf

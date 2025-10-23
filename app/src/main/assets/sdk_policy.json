@@ -3,7 +3,7 @@
   "sdks": [
     {
       "id": "APPSFLYER",
-      "requiredConsent": ["ANALYTICS", "MARKETING"],
+      "requiredConsent": ["ANALYTICS"],
       "initOrder": 10,
       "thread": "BACKGROUND"
     }

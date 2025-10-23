@@ -3,6 +3,7 @@ package com.example.consentgatinglab.di
 import android.app.Application
 import com.example.consentgatinglab.analytics.AnalyticsController
 import com.example.consentgatinglab.consent.DefaultConsentManager
+import com.example.consentgatinglab.core.SdkRegistry
 import com.example.consentgatinglab.ump.UmpStateSource
 import dagger.Module
 import dagger.Provides
@@ -24,6 +25,12 @@ object AppModule {
     @Singleton
     fun provideUmpStateSource(): UmpStateSource {
         return UmpStateSource()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSdkRegistry(application: Application): SdkRegistry {
+        return SdkRegistry.fromAsset(application)
     }
 
     @Provides

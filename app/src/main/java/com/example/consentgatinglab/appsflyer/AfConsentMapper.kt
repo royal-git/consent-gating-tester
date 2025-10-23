@@ -9,6 +9,7 @@ data class Effective(
 object AfConsentMapper {
     fun effective(
         granted: Set<ConsentType>,
+        required: Set<ConsentType>,
         gdprSubject: Boolean,
         umpReady: Boolean,
         hasTcf: Boolean
@@ -16,10 +17,8 @@ object AfConsentMapper {
         val underGdpr = gdprSubject
         val cmpAllows = !underGdpr || (umpReady && hasTcf)
 
-        // AppsFlyer requires both ANALYTICS and MARKETING consent
-        val allow = (ConsentType.ANALYTICS in granted) &&
-                    (ConsentType.MARKETING in granted) &&
-                    cmpAllows
+        val allowsByPolicy = required.all { it in granted }
+        val allow = allowsByPolicy && cmpAllows
 
         return Effective(allow)
     }
